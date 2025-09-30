@@ -12,9 +12,13 @@ A Flutter application that displays a grid of images, allowing users to switch b
 - Smooth transitions between data sources.
 
 ## In app screenshot & gif
-![](assets/screenshots/app_video.gif)
+<p align="center">
+  <img src="assets/screenshots/app_video.gif" width="300"/>
+</p>
 
-![](assets/screenshots/screenshot1.png)
-![](assets/screenshots/screenshot2.png)
-![](assets/screenshots/screenshot3.png)
-![](assets/screenshots/screenshot4.png)
+<p align="center">
+  <img src="assets/screenshots/screenshot1.png" width="200"/>
+  <img src="assets/screenshots/screenshot2.png" width="200"/>
+  <img src="assets/screenshots/screenshot3.png" width="200"/>
+  <img src="assets/screenshots/screenshot4.png" width="200"/>
+</p>
