@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_image_gridview/data/local_data_source.dart';
+import 'package:flutter_image_gridview/data/remote_data_source.dart';
+import 'package:flutter_image_gridview/widgets/local_stagered_grid_view_widget.dart';
+import 'package:flutter_image_gridview/widgets/switch_local_to_remote.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 class HomePage extends StatefulWidget {
@@ -9,56 +13,35 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<StaggeredGridTile> images = [
-    StaggeredGridTile.count(
-      crossAxisCellCount: 1,
-      mainAxisCellCount: 2,
-      child: Image.asset("assets/images/image1.jpg", fit: BoxFit.cover),
-    ),
-    StaggeredGridTile.count(
-      crossAxisCellCount: 1,
-      mainAxisCellCount: 1,
-      child: Image.asset("assets/images/image2.jpg", fit: BoxFit.cover),
-    ),
-    StaggeredGridTile.count(
-      crossAxisCellCount: 1,
-      mainAxisCellCount: 1,
-      child: Image.asset("assets/images/image3.jpg", fit: BoxFit.cover),
-    ),
-    StaggeredGridTile.count(
-      crossAxisCellCount: 1,
-      mainAxisCellCount: 2,
-      child: Image.asset("assets/images/image4.jpg", fit: BoxFit.cover),
-    ),
-    StaggeredGridTile.count(
-      crossAxisCellCount: 1,
-      mainAxisCellCount: 1,
-      child: Image.asset("assets/images/image5.jpg", fit: BoxFit.cover),
-    ),
-    StaggeredGridTile.count(
-      crossAxisCellCount: 1,
-      mainAxisCellCount: 1,
-      child: Image.asset("assets/images/image6.jpg", fit: BoxFit.cover),
-    ),
-    StaggeredGridTile.count(
-      crossAxisCellCount: 1,
-      mainAxisCellCount: 2,
-      child: Image.asset("assets/images/image7.jpg", fit: BoxFit.cover),
-    ),
-    StaggeredGridTile.count(
-      crossAxisCellCount: 1,
-      mainAxisCellCount: 1,
-      child: Image.asset("assets/images/image8.jpg", fit: BoxFit.cover),
-    ),
-    StaggeredGridTile.count(
-      crossAxisCellCount: 1,
-      mainAxisCellCount: 1,
-
-      child: Image.asset("assets/images/image9.jpg", fit: BoxFit.cover),
-    ),
-  ];
-
   bool isActive = false;
+
+  Future<List<StaggeredGridTile>> loadRemoteImages(BuildContext context) async {
+    final tiles = <StaggeredGridTile>[];
+
+    for (var i = 0; i < remoteImageUrls.length; i++) {
+      final url = remoteImageUrls[i];
+      await precacheImage(NetworkImage(url), context); // Önceden belleğe yükle
+
+      tiles.add(
+        StaggeredGridTile.count(
+          crossAxisCellCount: 1,
+          mainAxisCellCount: (i % 3 == 0)
+              ? 2
+              : 1, // örnek olarak farklı yükseklik
+          child: Image.network(url, fit: BoxFit.cover),
+        ),
+      );
+    }
+
+    return tiles;
+  }
+
+  Future<void> changeDataSource() async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    setState(() {
+      isActive = !isActive; // toggle
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,28 +53,28 @@ class _HomePageState extends State<HomePage> {
           return [
             SliverAppBar(
               actions: [
-                IconButton(
-                  onPressed: () {
-                    setState(() {
-                      isActive = !isActive;
-                    });
-                  },
-                  icon: isActive
-                      ? Icon(Icons.cloud, color: Colors.white)
-                      : Icon(Icons.cloud),
+                SwitchLocalToRemote(
+                  isActive: isActive,
+                  changeDataSource: changeDataSource,
                 ),
               ],
               backgroundColor: Colors.transparent,
             ),
           ];
         },
-        body: SingleChildScrollView(
-          child: StaggeredGrid.count(
-            crossAxisCount: 2,
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            children: images,
-          ),
+        body: FutureBuilder<List<StaggeredGridTile>>(
+          future: isActive
+              ? loadRemoteImages(context)
+              : Future.value(localimages),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return Center(child: Text("Hata: ${snapshot.error}"));
+            }
+            return LocalStageredGridViewWidget(images: snapshot.data!);
+          },
         ),
       ),
     );
